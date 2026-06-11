@@ -29,9 +29,24 @@ void create_client_data_command() {
 }
 
 int16_t fetch_client_state() {
+#ifdef __ATARI__
+	uint16_t shape_bytes;
+
+	memset(app_data, 0, APP_DATA_SIZE);
+	request_client_data();
+	read_response_wait((uint8_t *) app_data, 3);
+
+	shape_bytes = app_data[2] * 3;
+	if (shape_bytes > 0) {
+		read_response_wait((uint8_t *) app_data + 3, shape_bytes);
+	}
+
+	return 3 + shape_bytes;
+#else
 	memset(app_data, 0, APP_DATA_SIZE);
 	request_client_data();
 	return read_response_min((uint8_t *) app_data, 1, APP_DATA_SIZE);
+#endif
 }
 
 void get_world_state() {
@@ -65,10 +80,22 @@ void get_world_state() {
 
 // get up to 512 bytes for all connected clients. we live in hope
 void get_world_clients() {
+#ifdef __ATARI__
+	uint16_t len = ((uint16_t) num_clients) << 3;
+#endif
+
 	memset(clients_buffer, 0, 512);
 	create_command("x-who");
 	send_command();
+#ifdef __ATARI__
+	if (len == 0) {
+		read_response_wait((uint8_t *) clients_buffer, 1);
+	} else {
+		read_response_wait((uint8_t *) clients_buffer, len);
+	}
+#else
 	read_response_min((uint8_t *) clients_buffer, 1, 512);
+#endif
 }
 
 void get_broadcast() {

@@ -33,5 +33,6 @@ $(OBJDIR)/$(CURRENT_TARGET)/%.o: %.s $(VERSION_FILE) | $(OBJDIR)
 	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(ASFLAGS) -o $@ $<
 
 
-$(BUILD_DIR)/$(PROGRAM_TGT): $(OBJECTS) $(LIBS) | $(BUILD_DIR)
-	$(CC) -t $(CURRENT_TARGET) $(LDFLAGS) -o $@ $^
+$(BUILD_DIR)/$(PROGRAM_TGT): $(OBJECTS) $(LIBS) $(PROGRAM_EXTRA_DEPS) | $(BUILD_DIR)
+	$(CC) -t $(CURRENT_TARGET) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS)
+	$(POST_LINK_CMDS)

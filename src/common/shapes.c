@@ -89,6 +89,35 @@ uint8_t get_shape_count() {
 	return app_data[0];
 }
 
+#ifdef __ATARI__
+static int16_t read_shape_data_exact(uint8_t *buf) {
+	uint8_t i;
+	uint8_t w;
+	uint16_t dataLength;
+	uint16_t offset = 0;
+
+	for (i = 0; i < shape_count; ++i) {
+		if (offset + 2 > APP_DATA_SIZE) {
+			return -1;
+		}
+
+		read_response_wait(buf + offset, 2);
+		w = buf[offset + 1];
+		offset += 2;
+
+		dataLength = (uint16_t) w * (uint16_t) w;
+		if (offset + dataLength > APP_DATA_SIZE) {
+			return -1;
+		}
+
+		read_response_wait(buf + offset, dataLength);
+		offset += dataLength;
+	}
+
+	return (int16_t) offset;
+}
+#endif
+
 void read_and_parse_shapes_data() {
 	int n;
 
@@ -96,11 +125,15 @@ void read_and_parse_shapes_data() {
 	memset(app_data, 0, APP_DATA_SIZE);
 	create_command("x-shape-data");
 	send_command();
+#ifdef __ATARI__
+	n = read_shape_data_exact(app_data);
+#else
 	n = read_response_min(app_data, 1, APP_DATA_SIZE);
+#endif
 	// hd(app_data, APP_DATA_SIZE);
 
 	if (n < 0) {
-		err = -n;
+		err = 1;
 		handle_err("shape data read");
 	}
 

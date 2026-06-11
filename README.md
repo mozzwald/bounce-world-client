@@ -1,12 +1,15 @@
 # bounce-world-client
 
-A fujinet-lib application to connect to bouncy-world service.
+A FujiNet application to connect to bouncy-world service.
+
+Atari 8-bit builds use FujiNet Netstream mode for the live TCP connection. Other supported platforms continue to use `fujinet-lib`.
+The Atari Netstream handler is built with `mads` from `/home/ahlegna/.mozzwald/fujinet-atari-netstream` and embedded into the `.com` as a fixed `$2800` load segment.
 
 The bouncy world service can be found at https://github.com/markjfisher/bounce-world
 
 ## building
 
-Standard make for cc65 projects with fujinet-lib. Set TARGETS for make if you wish to only build one platform.
+Standard make for cc65 projects. Set TARGETS for make if you wish to only build one platform.
 
 ```
 make clean

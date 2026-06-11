@@ -1,4 +1,3 @@
-################################################################
 # COMPILE FLAGS
 
 # reserved memory for graphics
@@ -6,10 +5,20 @@
 
 #LDFLAGS += --start-addr 0x4400
 LDFLAGS += -C cfg/atari.cfg
+LDFLAGS += --start-addr 0x4000
 
 CFLAGS += -DBWC_CUSTOM_CPUTC
 
-################################################################
+MADS ?= mads
+NETSTREAM_REPO ?= /home/ahlegna/.mozzwald/fujinet-atari-netstream
+NETSTREAM_HANDLER_BASE ?= 10240
+NETSTREAM_ENGINE := $(BUILD_DIR)/NSENGINE.OBX
+PROGRAM_EXTRA_DEPS += $(NETSTREAM_ENGINE)
+POST_LINK_CMDS += mv $@ $@.app && cat $(NETSTREAM_ENGINE) $@.app > $@ && rm $@.app
+
+$(NETSTREAM_ENGINE): $(NETSTREAM_REPO)/handler/netstream.s | $(BUILD_DIR)
+	$(MADS) $(NETSTREAM_REPO)/handler/netstream.s -i:$(NETSTREAM_REPO)/handler/include -d:BASEADDR=$(NETSTREAM_HANDLER_BASE) -d:HIBUILD=0 -s -p -o:$@
+
 # DISK creation
 
 SUFFIX = .com
@@ -40,7 +49,6 @@ ATARI_CACHE_DIR := $(CACHE_DIR)/atari
 	dir2atr -m -S -B $(ATARI_CACHE_DIR)/picoboot.bin $(DIST_DIR)/$(PROGRAM).atr $(DIST_DIR)/atr
 	rm -rf $(DIST_DIR)/atr
 
-################################################################
 # TESTING / EMULATOR
 
 # Specify ATARI_EMULATOR=[ALTIRRA|ATARI800] to set which one to run, default is ALTIRRA
@@ -63,4 +71,3 @@ atari_EMUCMD := $($(ATARI_EMULATOR))
 ifeq ($(ATARI_EMULATOR),)
 atari_EMUCMD := $(ALTIRRA)
 endif
-
