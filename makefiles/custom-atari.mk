@@ -9,17 +9,18 @@ LDFLAGS += --start-addr 0x4000
 
 CFLAGS += -DBWC_CUSTOM_CPUTC
 
-MADS ?= mads
-NETSTREAM_REPO ?= ~/fujicode/fujinetstream
+NETSTREAM_REPO ?= ../fujinet-atari-netstream
 NETSTREAM_REPO_EXPANDED := $(if $(filter ~/%,$(NETSTREAM_REPO)),$(HOME)/$(patsubst ~/%,%,$(NETSTREAM_REPO)),$(if $(filter ~,$(NETSTREAM_REPO)),$(HOME),$(NETSTREAM_REPO)))
-NETSTREAM_HANDLER_BASE ?= 10240
 NETSTREAM_INPUT_BUFSIZE ?= 1024
-NETSTREAM_ENGINE := $(BUILD_DIR)/NSENGINE.OBX
-PROGRAM_EXTRA_DEPS += $(NETSTREAM_ENGINE)
-POST_LINK_CMDS += mv $@ $@.app && cat $(NETSTREAM_ENGINE) $@.app > $@ && rm $@.app
+NETSTREAM_HANDLER_SRC := $(NETSTREAM_REPO_EXPANDED)/handler/ca65/netstream.s
+NETSTREAM_HANDLER_OBJ := $(OBJDIR)/$(CURRENT_TARGET)/atari/netstream_handler.o
 
-$(NETSTREAM_ENGINE): $(NETSTREAM_REPO_EXPANDED)/handler/netstream.s | $(BUILD_DIR)
-	$(MADS) $(NETSTREAM_REPO_EXPANDED)/handler/netstream.s -i:$(NETSTREAM_REPO_EXPANDED)/handler/include -d:BASEADDR=$(NETSTREAM_HANDLER_BASE) -d:INPUT_BUFSIZE=$(NETSTREAM_INPUT_BUFSIZE) -d:HIBUILD=0 -s -p -o:$@
+OBJECTS := $(filter-out $(OBJDIR)/$(CURRENT_TARGET)/atari/netstream/netstream_api.o,$(OBJECTS))
+OBJECTS += $(NETSTREAM_HANDLER_OBJ)
+
+$(NETSTREAM_HANDLER_OBJ): $(NETSTREAM_HANDLER_SRC) | $(OBJDIR)
+	@$(call MKDIR,$(dir $@))
+	ca65 -t $(CURRENT_TARGET) --create-dep $(@:.o=.d) --include-dir $(NETSTREAM_REPO_EXPANDED)/handler/ca65/include -D INPUT_BUFSIZE=$(NETSTREAM_INPUT_BUFSIZE) -o $@ $<
 
 # DISK creation
 

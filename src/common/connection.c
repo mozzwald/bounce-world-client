@@ -126,22 +126,26 @@ static void parse_netstream_url(void) {
 	netstream_port = port;
 }
 
-void send_command() {
-	// The TCP server buffers command bytes until ASCII LF. The assembly
-	// helper appends NETSTREAM_COMMAND_EOL after the command payload.
-	if (ns_send_cmd_tmp((uint8_t)strlen((char *) cmd_tmp)) != 0) {
-		err = 1;
-		handle_err("send_command");
+static void netstream_send_buffer_with_lf(const uint8_t *buf, uint8_t len) {
+	uint8_t i;
+
+	for (i = 0; i < len; ++i) {
+		while (ns_send_byte(buf[i]) != 0) {
+		}
 	}
+	while (ns_send_byte(NETSTREAM_COMMAND_EOL) != 0) {
+	}
+}
+
+void send_command() {
+	// The TCP server buffers command bytes until ASCII LF.
+	netstream_send_buffer_with_lf(cmd_tmp, (uint8_t)strlen((char *) cmd_tmp));
 }
 
 // just send the cached client data command
 void request_client_data() {
 	// Responses are raw bytes, not LF-framed; only outgoing commands carry LF.
-	if (ns_send_client_data_cmd(client_data_cmd_len) != 0) {
-		err = 1;
-		handle_err("request_client_data");
-	}
+	netstream_send_buffer_with_lf((uint8_t *)client_data_cmd, client_data_cmd_len);
 }
 
 void connect_service() {
