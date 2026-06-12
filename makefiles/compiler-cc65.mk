@@ -1,5 +1,12 @@
 CC := cl65
 
+CC65_HOME ?= $(firstword $(wildcard /usr/share/cc65 /usr/local/share/cc65))
+ifneq ($(CC65_HOME),)
+ASFLAGS += --asm-include-dir $(CC65_HOME)/asminc
+CFLAGS += --include-dir $(CC65_HOME)/include
+LDFLAGS += -L $(CC65_HOME)/lib
+endif
+
 ASFLAGS += --asm-include-dir src/common --asm-include-dir src/$(CURRENT_PLATFORM) --asm-include-dir src/current-target/$(CURRENT_TARGET)
 CFLAGS += --include-dir src/common --include-dir src/$(CURRENT_PLATFORM) --include-dir src/current-target/$(CURRENT_TARGET)
 
@@ -26,7 +33,7 @@ CFLAGS += -Osir
 
 $(OBJDIR)/$(CURRENT_TARGET)/%.o: %.c $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) -o $@ $<
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) $(ASFLAGS) -o $@ $<
 
 $(OBJDIR)/$(CURRENT_TARGET)/%.o: %.s $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))

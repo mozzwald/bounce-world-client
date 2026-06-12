@@ -24,6 +24,7 @@
 		.importzp ptr1
 
 NS_BASE = $2800
+NETSTREAM_COMMAND_EOL = $0a
 
 _ns_begin_stream:
 		jsr		NS_BASE+0
@@ -75,7 +76,7 @@ send_loop:
 		iny
 		bne		send_loop
 send_lf:
-		lda		#$0a
+		lda		#NETSTREAM_COMMAND_EOL
 		jsr		send_a_retry
 		lda		#0
 		rts

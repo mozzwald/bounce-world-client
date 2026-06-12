@@ -127,6 +127,8 @@ static void parse_netstream_url(void) {
 }
 
 void send_command() {
+	// The TCP server buffers command bytes until ASCII LF. The assembly
+	// helper appends NETSTREAM_COMMAND_EOL after the command payload.
 	if (ns_send_cmd_tmp((uint8_t)strlen((char *) cmd_tmp)) != 0) {
 		err = 1;
 		handle_err("send_command");
@@ -135,6 +137,7 @@ void send_command() {
 
 // just send the cached client data command
 void request_client_data() {
+	// Responses are raw bytes, not LF-framed; only outgoing commands carry LF.
 	if (ns_send_client_data_cmd(client_data_cmd_len) != 0) {
 		err = 1;
 		handle_err("request_client_data");
@@ -158,7 +161,9 @@ void disconnect_service() {
 }
 
 // read fully until we get len bytes
-// Used for commands where we must receive all the data
+// Used for commands where we must receive all the raw response bytes.
+// Server LF framing is request-only; binary responses may legitimately
+// contain 0x0a and must not be stripped or treated as packet terminators.
 int16_t read_response_wait(uint8_t *buf, int16_t len) {
 	int16_t total = 0;
 	while (total < len) {
