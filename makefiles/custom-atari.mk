@@ -6,8 +6,22 @@
 
 #LDFLAGS += --start-addr 0x4400
 LDFLAGS += -C cfg/atari.cfg
+LDFLAGS += --start-addr 0x4000
 
 CFLAGS += -DBWC_CUSTOM_CPUTC
+
+NETSTREAM_REPO ?= ../fujinet-atari-netstream
+NETSTREAM_REPO_EXPANDED := $(if $(filter ~/%,$(NETSTREAM_REPO)),$(HOME)/$(patsubst ~/%,%,$(NETSTREAM_REPO)),$(if $(filter ~,$(NETSTREAM_REPO)),$(HOME),$(NETSTREAM_REPO)))
+NETSTREAM_INPUT_BUFSIZE ?= 1024
+NETSTREAM_HANDLER_SRC := $(NETSTREAM_REPO_EXPANDED)/handler/ca65/netstream.s
+NETSTREAM_HANDLER_OBJ := $(OBJDIR)/$(CURRENT_TARGET)/atari/netstream_handler.o
+
+OBJECTS := $(filter-out $(OBJDIR)/$(CURRENT_TARGET)/atari/netstream/netstream_api.o,$(OBJECTS))
+OBJECTS += $(NETSTREAM_HANDLER_OBJ)
+
+$(NETSTREAM_HANDLER_OBJ): $(NETSTREAM_HANDLER_SRC) | $(OBJDIR)
+	@$(call MKDIR,$(dir $@))
+	ca65 -t $(CURRENT_TARGET) --create-dep $(@:.o=.d) --include-dir $(CC65_HOME)/asminc --include-dir $(NETSTREAM_REPO_EXPANDED)/handler/ca65/include -D INPUT_BUFSIZE=$(NETSTREAM_INPUT_BUFSIZE) -o $@ $<
 
 ################################################################
 # DISK creation
@@ -63,4 +77,3 @@ atari_EMUCMD := $($(ATARI_EMULATOR))
 ifeq ($(ATARI_EMULATOR),)
 atari_EMUCMD := $(ALTIRRA)
 endif
-

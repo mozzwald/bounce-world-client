@@ -48,6 +48,7 @@ cputdirect:
         ldy     ROWCRS
         lda     mul40_lo, y
         ldx     mul40_hi, y
+        clc
         adc     SAVMSC
         sta     ptr4
         txa
